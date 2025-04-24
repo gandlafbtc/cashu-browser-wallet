@@ -31,6 +31,7 @@ import { transactionsStore } from "./stores/persistent/transactions.js";
 import { discoveredContacts } from "./stores/session/contactdiscover.js";
 import { discoveredMints } from "./stores/session/mintdiscover.js";
 import { init, reencrypt } from "./init.js";
+import { getWalletWithUnit } from "./util/walletUtils.js";
 
 
 export {
@@ -78,6 +79,8 @@ export {
     discoverMints,
     discoveredMints,    
     
+    //utils
+    getWalletWithUnit
     
 
 }

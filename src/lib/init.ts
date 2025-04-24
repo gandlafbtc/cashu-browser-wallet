@@ -60,12 +60,14 @@ export const init = async (pass?: string) => {
     } else {
         key.set(await kdf(DEFAULT_PASS));
     }
-    await initStores();
+    //mnemonic must be created and initialized before any other stores are initialized because some other stores rely on it
+    await mnemonic.init()
     if (!get(mnemonic).length) {
 		const m = generateMnemonic(wordlist, 128);
 		await mnemonic.reset();
 		await mnemonic.add({ mnemonic: m });
     }
+    await initStores();
 };
 
 export const reencrypt = async () => {

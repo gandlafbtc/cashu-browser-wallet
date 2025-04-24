@@ -49,7 +49,7 @@ const createKeysStore = (encryptionHelper: EncryptionHelper<KeyPair>, keysId: nu
 		const pk = getPublicKey(sk);
 		await add({
 			counter: largest,
-			publicKey: '02' + pk,
+			publicKey: pk,
 			privateKey: bytesToHex(sk)
 		});
 		return { publicKey: pk, privateKey: bytesToHex(sk) };
@@ -59,7 +59,7 @@ const createKeysStore = (encryptionHelper: EncryptionHelper<KeyPair>, keysId: nu
 		const pub = getPublicKey(hexToBytes(privKey));
 		await add({
 			counter: -1,
-			publicKey: '02' + pub,
+			publicKey: pub,
 			privateKey: privKey
 		});
 		return { publicKey: pub, privateKey: privKey };
