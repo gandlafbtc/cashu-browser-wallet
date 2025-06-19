@@ -1,5 +1,5 @@
 import type { StoredMintQuote } from '$lib/db/models/types.js';
-import { MintQuoteState, type MintQuoteResponse } from '@cashu/cashu-ts';
+import { MintQuoteState } from '@cashu/cashu-ts';
 import { get, writable } from 'svelte/store';
 import { createDefaultStoreFunctions } from './helper/storeHelper.js';
 import { createEncryptionHelper } from './helper/encryptionHelper.js';

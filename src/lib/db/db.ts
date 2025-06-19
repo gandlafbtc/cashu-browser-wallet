@@ -2,7 +2,7 @@ import { openDB, deleteDB, type IDBPDatabase } from 'idb';
 import type { NutstashDB } from './model.js';
 import { ensureError } from '../helpers/errors.js';
 
-export const DB_VERSION = 3;
+export const DB_VERSION = 5;
 export const DB_NAME = 'nutstash-db';
 
 export class DB {

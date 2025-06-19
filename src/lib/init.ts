@@ -53,7 +53,6 @@ const initStores = async () => {
 
 export const init = async (pass?: string) => {
     if (!BROWSER) return
-
     if (get(usePassword)) {
         if (!pass) throw new Error("Password is required");
         key.set(await kdf(pass));
@@ -73,4 +72,10 @@ export const init = async (pass?: string) => {
 export const reencrypt = async () => {
     if (!BROWSER) return
 	await Promise.all(Object.values(stores).map(store => store.reEncrypt()));
+};
+
+export const setStoresFromBackupJSON = async (obj: any) => {
+	(Object.keys(stores)).forEach(key => {
+		stores[key].set(obj[key]);
+	});
 };

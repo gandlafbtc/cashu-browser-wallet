@@ -1,5 +1,5 @@
 import type { StoredMeltQuote } from '$lib/db/models/types.js';
-import { MeltQuoteState, type MeltQuoteResponse } from '@cashu/cashu-ts';
+import { MeltQuoteState } from '@cashu/cashu-ts';
 import { get, writable } from 'svelte/store';
 import { createDefaultStoreFunctions } from './helper/storeHelper.js';
 import { createEncryptionHelper } from './helper/encryptionHelper.js';
