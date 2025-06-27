@@ -6,6 +6,7 @@ import {
     createCashuRequest,
     createMeltQuote,
     createMintQuote,
+    createMultiMint,
     getFeeForProofs,
     getMinMaxFeeForAmount,
     meltProofs,
@@ -22,6 +23,7 @@ import { ensureError } from "./helpers/errors.js";
 import * as types from "./db/models/types.js"
 import { DB } from "./db/db.js";
 import { randDBKey } from "./db/helper.js";
+import { conversionUnits, getConversionRate } from "./helpers/conversion.js";
 export {
     reconnect,
     publishEvent,
@@ -42,8 +44,10 @@ export {
     checkProofs,
     createCashuRequest,
     createMeltQuote,
+    
     // actions
     createMintQuote,
+    createMultiMint,
     discoverContacts,
     discoverMints,
     getFeeForProofs,
@@ -56,4 +60,7 @@ export {
     reencrypt,
     sendEcash,
     setStoresFromBackupJSON,
+    //conversion
+    getConversionRate,
+    conversionUnits
 };

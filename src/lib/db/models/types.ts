@@ -54,6 +54,15 @@ export type StoredMeltQuote = Omit<MeltQuoteResponse, 'state'> & {
 	counts?: { keysetId: string; counts: number[] };
 };
 
+export type MultiMeltQuote = {
+	id: string;
+	type: "multi-melt"
+	quoteIds: string[];
+	createdAt: number;
+	lastChangedAt: number;
+	invoice: string;
+}
+
 export type StoredTransaction = {
 	id: string;
 	type: TransactionType;
@@ -159,6 +168,8 @@ export type Settings = {
 	mints: {};
 	currency: {
 		prefferedUnit: string;
+		useConversion: boolean;
+		conversionUnit: string;
 	};
 	keys: {};
 	nostr: {};

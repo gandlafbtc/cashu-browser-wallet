@@ -19,7 +19,9 @@ const DEFAULT_SETTINGS: Settings = {
 	id: '0',
 	contact: {},
 	currency: {
-		prefferedUnit: 'sat'
+		prefferedUnit: 'sat',
+		useConversion: false,
+		conversionUnit: 'USD'
 	},
 	keys: {},
 	mints: {},
@@ -68,6 +70,17 @@ const createSettingsStore = () => {
 		await addOrUpdate('0', s, 'id');
 	};
 
-	return { ...store, init, reset, clear, reEncrypt, setHideBalance, setAutoReceive };
+	const setUseConversion = async (value: boolean) => {
+		const s = get(store)[0];
+		s.currency.useConversion = value;
+		await addOrUpdate('0', s, 'id');
+	};
+	const setConversionUnit = async (value: string) => {
+		const s = get(store)[0];
+		s.currency.conversionUnit = value;
+		await addOrUpdate('0', s, 'id');
+	};
+
+	return { ...store, init, reset, clear, reEncrypt, setHideBalance, setAutoReceive, setUseConversion, setConversionUnit };
 };
 export const settings = createSettingsStore();

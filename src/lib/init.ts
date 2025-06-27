@@ -22,6 +22,7 @@ import { DEFAULT_PASS } from "./stores/static/pass.js";
 import { BROWSER } from "esm-env";
 import { generateMnemonic } from '@scure/bip39';
 import { wordlist } from '@scure/bip39/wordlists/english';
+import { multiMeltQuotesStore } from "./stores/index.js";
 
 const stores = {
 	mnemonic,
@@ -42,7 +43,8 @@ const stores = {
 	relaysStore,
 	cashuRequestsStore,
 	swapsStore,
-    settings
+    settings,
+	multiMeltQuotesStore
 } as const;
 
 

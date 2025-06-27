@@ -82,4 +82,9 @@ export interface NutstashDB extends DBSchema {
 		key: string;
 		value: EncryptedStore;
 	};
+	//DB version 6
+	'encrypted-multi-melt-quotes': {
+		key: string;
+		value: EncryptedStore;
+	};
 }

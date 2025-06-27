@@ -2,7 +2,7 @@ import { openDB, deleteDB, type IDBPDatabase } from 'idb';
 import type { NutstashDB } from './model.js';
 import { ensureError } from '../helpers/errors.js';
 
-export const DB_VERSION = 5;
+export const DB_VERSION = 6;
 export const DB_NAME = 'nutstash-db';
 
 export class DB {
@@ -48,6 +48,12 @@ export class DB {
 				if ((newVersion ?? 0) > 2 && oldVersion < 3) {
 					db.createObjectStore('encrypted-offline-transactions');
 				}
+				// version 6
+				if ((newVersion ?? 0) > 2 && oldVersion < 6) {
+					db.createObjectStore('encrypted-multi-melt-quotes');
+				}
+				
+
 			},
 			blocked: (currentVersion, blockedVersion, event) => {
 				// …

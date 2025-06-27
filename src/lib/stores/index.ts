@@ -28,6 +28,7 @@ import { selectedMint } from "./local/selectedMints.js";
 import { contactsStore } from "./persistent/contacts.js";
 import { getBy, getByHost, getByMany } from "./persistent/helper/storeHelper.js";
 import { NUT, NUTSTASH_NUTS, NUTSTASH_PUBKEY } from "./static/const.js";
+import { multiMeltQuotesStore } from "./persistent/multiMelt.js";
 
 
 export {
@@ -64,4 +65,5 @@ export {
     DEFAULT_PASS,
     usePassword,
     offlineTransactionsStore,
+    multiMeltQuotesStore
 }

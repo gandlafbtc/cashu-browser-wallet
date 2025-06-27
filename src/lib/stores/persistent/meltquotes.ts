@@ -10,7 +10,7 @@ const createMeltQuotesStore = () => {
 	const initialMeltQuotes: Array<StoredMeltQuote> = [];
 	const store = writable<Array<StoredMeltQuote>>(initialMeltQuotes);
 	const { set, subscribe, update } = store;
-	const { addOrUpdate, remove, clear, init, reEncrypt, reset, getBy, getAllBy } =
+	const { addOrUpdate, remove, clear, init, reEncrypt, reset, getBy, getAllBy, addMany } =
 		createDefaultStoreFunctions(encryptionHelper, store);
 
 	const getActiveQuotes = () => {
@@ -29,7 +29,8 @@ const createMeltQuotesStore = () => {
 		clear,
 		reEncrypt,
 		getBy,
-		getAllBy
+		getAllBy,
+		addMany
 	};
 };
 export const meltQuotesStore = createMeltQuotesStore();

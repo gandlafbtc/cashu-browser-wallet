@@ -67,6 +67,19 @@ const createKeysStore = (encryptionHelper: EncryptionHelper<KeyPair>, keysId: nu
 
 	const init = async () => {
 		await initialize();
+
+		//fix legacy pubkeys
+		for (const key of get(store)) {
+			if (key.publicKey.length!==66) {
+				continue
+			}
+			addOrUpdate(key.privateKey, {
+				counter: key.counter,
+				publicKey: key.publicKey.slice(2),
+				privateKey: key.privateKey
+			}, "privateKey")
+		}
+
 		if (!get(store).length) {
 			await createNewKeypair();
 		}

@@ -41,7 +41,7 @@ export const createAlias = () => {
 
 export const getNprofile = () => {
 	const profilePointer: ProfilePointer = {
-		pubkey: get(keysStore)[get(keysStore).length - 1].publicKey.slice(2),
+		pubkey: get(keysStore)[get(keysStore).length - 1].publicKey,
 		relays: get(relaysStore)
 			.filter((r) => r.isOn)
 			.map((r) => r.url)
@@ -169,7 +169,7 @@ const sendNip17DirectMessage = async function (
 		.map((r) => r.url);
 	const hexPrivKey = get(keysStore)[get(keysStore).length - 1].privateKey;
 	const seedSignerSecKey = hexToBytes(hexPrivKey);
-	const signerPubKey = keysStore.getBy(hexPrivKey, 'privateKey')?.publicKey.slice(2);
+	const signerPubKey = keysStore.getBy(hexPrivKey, 'privateKey')?.publicKey;
 	if (!signerPubKey) {
 		throw new Error("no pubkey found");
 	}
@@ -271,7 +271,7 @@ const subscribeToNip17DirectMessages = async function () {
 		.map((r) => r.url);
 	const secKeyHex = get(keysStore)[get(keysStore).length - 1].privateKey;
 	const seedSignerSecKey = hexToBytes(secKeyHex);
-	const pubkeyHex = keysStore.getBy(secKeyHex, 'privateKey')?.publicKey.slice(2);
+	const pubkeyHex = keysStore.getBy(secKeyHex, 'privateKey')?.publicKey;
 	if (!pubkeyHex) {
 		throw new Error("No public key found");
 	}

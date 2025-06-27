@@ -34,6 +34,7 @@ import {
 	TransactionStatus,
 	TransactionType,
 	type Mint,
+	type MultiMeltQuote,
 	type StoredMeltQuote,
 	type StoredMintQuote,
 	type StoredPaymentRequest,
@@ -46,6 +47,8 @@ import { cashuRequestsStore } from '$lib/stores/persistent/requests.js';
 import { hashToCurve } from '@cashu/crypto/modules/common';
 import { offlineTransactionsStore } from '$lib/stores/persistent/offlineTransactions.js';
 import { ensureError } from '$lib/helpers/errors.js';
+import { multiMeltQuotesStore } from '$lib/stores/persistent/multiMelt.js';
+import { sha256 } from "@noble/hashes/sha2";
 
 
 export const createMintQuote = async (
@@ -97,6 +100,49 @@ export const createMeltQuote = async (
 	await meltQuotesStore.addOrUpdate(quote.quote, quoteToStore, 'quote');
 	return quoteToStore;
 };
+
+
+const createMultiMeltQuote = async (
+	mintUrl: string,
+	invoice: string,
+	amount: number,
+	options?: { unit?: string }
+) => {
+	if (!amount) {
+		throw new Error("no amount provided");
+	}
+	const wallet = await getWalletWithUnit(get(mints), mintUrl, options?.unit);
+	const quote = await wallet.createMultiPathMeltQuote(invoice, amount*1000);
+	if (!quote) {
+		throw new Error("No quote was returned");
+	}
+	const quoteToStore: StoredMeltQuote = {
+		...quote,
+		request: invoice,
+		createdAt: Date.now(),
+		lastChangedAt: Date.now(),
+		mintUrl,
+		unit: options?.unit ?? 'sat',
+		type: 'melt'
+	};
+	return quoteToStore;
+};
+
+export const createMultiMint = async (mintsWithAmount: (Mint & {amount: number })[], invoice: string) => {
+	const quotes = await Promise.all(mintsWithAmount.map(async (mint) => { return createMultiMeltQuote(mint.url, invoice, mint.amount, {unit: "sat"})}))
+	await meltQuotesStore.addMany(quotes);
+	const quoteIds = quotes.map(q => q.quote).sort()
+	const multiQuote: MultiMeltQuote = {
+		id: bytesToHex(sha256(quoteIds.join(''))),
+		quoteIds,
+		createdAt: Date.now(),
+		lastChangedAt: Date.now(),
+		type: 'multi-melt',
+		invoice,
+	}
+	await multiMeltQuotesStore.add(multiQuote)
+	return multiQuote;
+}
 
 export const checkMintQuote = async (quote: StoredMintQuote) => {
 	const wallet = await getWalletWithUnit(get(mints), quote.mintUrl, quote.unit);
