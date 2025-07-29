@@ -88,9 +88,10 @@ const getOther = async () => {
 		throw new Error("Failed to fetch conversion rate from blockchain.info");
 	}
 	const data = await response.json();
-	const currencyShort = get(settings)[0].currency.conversionUnit
+	let currencyShort = get(settings)[0].currency.conversionUnit
 	if (!currencyShort) {
-		throw new Error("Failed to get currency short code from environment variable OPENPLEB_CURRENCY");
+		settings.setConversionUnit("USD")
+		currencyShort = "USD"
 	}
 	const ticker = currencyShort.toUpperCase()
 	const rate = data[ticker]?.last

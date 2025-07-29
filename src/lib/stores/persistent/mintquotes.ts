@@ -3,7 +3,8 @@ import { MintQuoteState } from '@cashu/cashu-ts';
 import { get, writable } from 'svelte/store';
 import { createDefaultStoreFunctions } from './helper/storeHelper.js';
 import { createEncryptionHelper } from './helper/encryptionHelper.js';
-import { checkMintQuote, mintProofs } from '$lib/actions/actions.js';
+import { checkMintQuote, mintProofs, subrcibeToMintQuote } from '$lib/actions/actions.js';
+import { settings } from './settings.js';
 
 const encryptionHelper = createEncryptionHelper<StoredMintQuote>('encrypted-mint-quotes');
 
@@ -20,19 +21,44 @@ const createMintQuotesStore = () => {
 		return get(store).filter((q) => q.state === MintQuoteState.PAID);
 	};
 
-	const createCheckMintQuotesInterval = (intervalMS: number) => {
-		return setInterval(async () => {
+	const init = async () => {
+		await defaults.init()
+		check()
+	};
+
+	const check = async () => {
+		let s = undefined
+		try {
+			s = await settings.getSettings()
 			await checkActiveQuotes();
 			await mintPaidQuotes();
-		}, intervalMS);
-	};
+		}
+		catch (e) {
+			console.error(e)
+			setTimeout(check, 1000 * 5);
+			return
+		}
+		if (s?.general.useWS) {
+			for (const q of [...getActiveQuotes(), ...getReadyForIssueQuotes()]) {
+				subrcibeToMintQuote(q.mintUrl, q.quote)
+			}
+		}
+		else {
+			setTimeout(check, 1000 * 5);
+		}
+	}
 
 	const checkActiveQuotes = async () => {
 		const actives = getActiveQuotes();
 		for (const quote of actives) {
 			const checked = await checkMintQuote(quote);
 			if (checked.state === 'PAID') {
-				await mintProofs(checked);
+				try {
+
+					await mintProofs(checked);
+				} catch (e) {
+					console.error(e)
+				}
 			}
 		}
 	};
@@ -43,12 +69,6 @@ const createMintQuotesStore = () => {
 		}
 	};
 
-	const interval = createCheckMintQuotesInterval(5000);
-
-	const terminateInterval = () => {
-		clearInterval(interval);
-	};
-
-	return { ...store, ...defaults, getActiveQuotes, terminateInterval };
+	return { ...store, ...defaults, getActiveQuotes, init };
 };
 export const mintQuotesStore = createMintQuotesStore();

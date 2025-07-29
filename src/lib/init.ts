@@ -27,6 +27,7 @@ import { multiMeltQuotesStore } from "./stores/index.js";
 const stores = {
 	mnemonic,
 	mints,
+    settings,
 	transactionsStore,
 	offlineTransactionsStore,
 	mintQuotesStore,
@@ -43,7 +44,6 @@ const stores = {
 	relaysStore,
 	cashuRequestsStore,
 	swapsStore,
-    settings,
 	multiMeltQuotesStore
 } as const;
 

@@ -30,7 +30,10 @@ const DEFAULT_SETTINGS: Settings = {
 		autoReceive: false
 	},
 	general: {
-		hideBalance: false
+		hideBalance: false,
+		useWS: false,
+		subscribeTokenState: false,
+		useMultinut:false
 	}
 };
 
@@ -58,6 +61,14 @@ const createSettingsStore = () => {
 		}
 	};
 
+	const getSettings = async (): Promise<Settings> => {
+		const s = get(store)[0]
+		if (!s) {
+			await init()
+		}
+		return get(store)[0];
+	}
+
 	const setHideBalance = async (value: boolean) => {
 		const s = get(store)[0];
 		s.general.hideBalance = value;
@@ -81,6 +92,22 @@ const createSettingsStore = () => {
 		await addOrUpdate('0', s, 'id');
 	};
 
-	return { ...store, init, reset, clear, reEncrypt, setHideBalance, setAutoReceive, setUseConversion, setConversionUnit };
+	const setUseWS = async (value: boolean) => {
+		const s = get(store)[0];
+		s.general.useWS = value;
+		await addOrUpdate('0', s, 'id');
+	};
+	const setUseMultinut = async (value: boolean) => {
+		const s = get(store)[0];
+		s.general.useMultinut = value;
+		await addOrUpdate('0', s, 'id');
+	};
+	const setSubscribeTokenState = async (value: boolean) => {
+		const s = get(store)[0];
+		s.general.subscribeTokenState = value;
+		await addOrUpdate('0', s, 'id');
+	};
+
+	return { ...store, init, reset, clear, reEncrypt, setHideBalance, setAutoReceive, setUseConversion, setConversionUnit, setUseWS, setSubscribeTokenState, getSettings, setUseMultinut };
 };
 export const settings = createSettingsStore();

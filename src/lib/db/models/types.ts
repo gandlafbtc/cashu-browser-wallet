@@ -179,6 +179,9 @@ export type Settings = {
 	contact: {};
 	general: {
 		hideBalance: boolean;
+		useWS: boolean;
+		subscribeTokenState: boolean;
+		useMultinut: boolean;
 	};
 };
 

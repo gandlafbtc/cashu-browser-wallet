@@ -1,11 +1,12 @@
 import { ContextError, ensureError } from '$lib/helpers/errors.js';
-import { CashuMint, type MintActiveKeys } from '@cashu/cashu-ts';
+import { CashuMint, type MintActiveKeys,type MintKeyset } from '@cashu/cashu-ts';
 
 import { get, writable } from 'svelte/store';
 import type { Mint } from '$lib/db/models/types.js';
 import { createEncryptionHelper, type EncryptionHelper } from './helper/encryptionHelper.js';
 import { createDefaultStoreFunctions } from './helper/storeHelper.js';
 import { getHostFromUrl } from '$lib/util/utils.js';
+import { getKeysetIdInt } from '@cashu/crypto/modules/common';
 
 const encryptionHelper = createEncryptionHelper<Mint>('encrypted-mints');
 
@@ -15,6 +16,28 @@ export const createMintsStore = (encryptionHelper: EncryptionHelper<Mint>) => {
 
 	const fetchMint = async (url: string) => {
 		const mint = await loadMint(url);
+		const ids = mint.keysets.keysets.map((k) => getKeysetIdInt(k.id))
+		const allMints = get(store)
+
+		// Check if any of the new mint's keyset ids are already used in existing mints with different URLs
+		for (const existingMint of allMints) {
+			// Skip the check if it's the same mint URL (we're just refreshing the same mint)
+			if (existingMint.url === url) continue;
+			
+			const existingIds = existingMint.keysets.keysets.map((k) =>  getKeysetIdInt(k.id));
+			const duplicateIds = ids.filter(id => existingIds.includes(id));
+			
+			if (duplicateIds.length > 0) {
+				throw new ContextError(`Mint contains colliding keyset ids: ${duplicateIds.join(', ')}`, {
+					context: {
+						url,
+						duplicateIds,
+						existingMintUrl: existingMint.url
+					}
+				});
+			}
+		}
+
 		defaults.addOrUpdate(url, mint, 'url');
 	};
 

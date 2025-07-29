@@ -25,7 +25,8 @@ import {
 	type PaymentRequestTransport,
 	CashuMint,
 	CashuWallet,
-	CheckStateEnum
+	CheckStateEnum,
+	type MintProofOptions
 } from '@cashu/cashu-ts';
 import { get } from 'svelte/store';
 import { bytesToHex, randomBytes } from '@noble/hashes/utils';
@@ -49,6 +50,7 @@ import { offlineTransactionsStore } from '$lib/stores/persistent/offlineTransact
 import { ensureError } from '$lib/helpers/errors.js';
 import { multiMeltQuotesStore } from '$lib/stores/persistent/multiMelt.js';
 import { sha256 } from "@noble/hashes/sha2";
+import { settingsStore } from '$lib/stores/index.js';
 
 
 export const createMintQuote = async (
@@ -71,6 +73,7 @@ export const createMintQuote = async (
 		type: 'mint'
 	};
 	await mintQuotesStore.addOrUpdate(quote.quote, quoteToStore, 'quote');
+	subrcibeToMintQuote(mintUrl, quote.quote)
 	return quoteToStore;
 };
 
@@ -98,6 +101,7 @@ export const createMeltQuote = async (
 		type: 'melt'
 	};
 	await meltQuotesStore.addOrUpdate(quote.quote, quoteToStore, 'quote');
+	subrcibeToMeltQuote(mintUrl, quote.quote)
 	return quoteToStore;
 };
 
@@ -144,6 +148,92 @@ export const createMultiMint = async (mintsWithAmount: (Mint & {amount: number }
 	return multiQuote;
 }
 
+export const subrcibeToMintQuote = async (mintUrl: string, quote: string, cb?: (state: MintQuoteState)=>void) => {
+	if(!get(settingsStore)[0]?.general.useWS){
+		console.log('ws not enabled in settings')
+		return
+	}
+	const wallet = await getWalletWithUnit(get(mints), mintUrl, "sat");
+	const unsub = await wallet.onMintQuoteUpdates(
+		[quote],
+		(p) => {
+			if (p.state === MintQuoteState.PAID) {
+				const storedQuote = mintQuotesStore.getBy(quote, "quote")
+				if (!storedQuote) {
+					console.error('quote not found:',quote)
+					return
+				}
+				mintProofs(storedQuote)
+			}
+			else if (p.state === MintQuoteState.ISSUED) {
+				console.log('issued')
+				unsub();
+			}
+			if (cb) {
+				cb(p.state)
+			}
+		},
+		(e) => {
+			console.log(e);
+			unsub();
+		}
+	);
+}
+
+export const subscribeToProofStateUpdate = async (mintUrl: string, proofs: Proof[], cb?: (state: CheckStateEnum)=>void) => {
+	if(!get(settingsStore)[0]?.general.subscribeTokenState){
+		console.log('subscribe not not enabled in settings')
+		return
+	}
+	const wallet = await getWalletWithUnit(get(mints), mintUrl, "sat");
+	const unsub = await wallet.onProofStateUpdates(
+		proofs,
+		(p) => {
+			if (p.state === CheckStateEnum.UNSPENT) {
+			}
+			if (p.state === CheckStateEnum.SPENT) {
+				unsub();
+			}
+			if (p.state === CheckStateEnum.PENDING) {
+			}
+			if (cb) {
+				cb(p.state)
+			}
+		},
+		(e) => {
+			console.log(e);
+			unsub();
+		}
+	);
+}
+
+export const subrcibeToMeltQuote = async (mintUrl: string, quote: string, cb?: (state: MeltQuoteState)=>void) => {
+	if(!get(settingsStore)[0]?.general.useWS){
+		console.log('ws not enabled in settings')
+		return
+	}
+	const wallet = await getWalletWithUnit(get(mints), mintUrl, "sat");
+	const unsub = await wallet.onMeltQuoteUpdates(
+		[quote],
+		(p) => {
+			if (p.state === MeltQuoteState.PAID) {
+				console.log('paid')
+				unsub();
+			}
+			else if (p.state === MeltQuoteState.PENDING) {
+				console.log('pending')
+			}
+			if (cb) {
+				cb(p.state)
+			}
+		},
+		(e) => {
+			console.log(e);
+			unsub();
+		}
+	);
+}
+
 export const checkMintQuote = async (quote: StoredMintQuote) => {
 	const wallet = await getWalletWithUnit(get(mints), quote.mintUrl, quote.unit);
 	const updatedQuote = await wallet.checkMintQuote(quote.quote);
@@ -166,12 +256,13 @@ export const checkMeltQuote = async (quote: StoredMeltQuote) => {
 	const quoteToStore: StoredMeltQuote = { ...quote };
 	quoteToStore.state = updatedQuote.state;
 	quoteToStore.lastChangedAt = Date.now();
-	if (
-		quoteToStore.state === MeltQuoteState.UNPAID &&
-		Math.floor(quoteToStore.lastChangedAt / 1000) > quoteToStore.expiry
-	) {
-		quoteToStore.state = EXPIRED.EXPIRED;
-	}
+	// TODO what to do with expiry? maybe try to refund and expire if it doesn't work?
+	// if (
+	// 	quoteToStore.state === MeltQuoteState.UNPAID &&
+	// 	Math.floor(quoteToStore.lastChangedAt / 1000) > quoteToStore.expiry
+	// ) {
+	// 	quoteToStore.state = EXPIRED.EXPIRED;
+	// }
 	await meltQuotesStore.addOrUpdate(quote.quote, quoteToStore, 'quote');
 	return quoteToStore;
 };
@@ -336,7 +427,8 @@ export const sendEcash = async (
 		privkey?: string;
 		isOffline?: boolean;
 		isRefundable?: boolean;
-	}
+	},
+	cb?: (state: CheckStateEnum) => void
 ) => {
 	const { send, keep, aproxProofs, endCount, keysetId, currentCount } = await doSend(
 		mintUrl,
@@ -361,6 +453,7 @@ export const sendEcash = async (
 	};
 
 	await transactionsStore.addOrUpdate(transactionToAdd.id, transactionToAdd, 'id');
+	subscribeToProofStateUpdate(mintUrl, [send[0]], cb)
 	return { send, keep, txId: transactionToAdd.id };
 };
 
