@@ -16,19 +16,19 @@ export const createMintsStore = (encryptionHelper: EncryptionHelper<Mint>) => {
 
 	const fetchMint = async (url: string) => {
 		const mint = await loadMint(url);
-		const ids = mint.keysets.keysets.map((k) => getKeysetIdInt(k.id))
-		const allMints = get(store)
+		const ids = mint.keysets.keysets.map((k) => k.id)
+		const intIds = mint.keysets.keysets.map((k) => getKeysetIdInt(k.id))
+		const allMints = get(store).filter(m=>m.url!==url)
 
 		// Check if any of the new mint's keyset ids are already used in existing mints with different URLs
 		for (const existingMint of allMints) {
-			// Skip the check if it's the same mint URL (we're just refreshing the same mint)
-			if (existingMint.url === url) continue;
-			
-			const existingIds = existingMint.keysets.keysets.map((k) =>  getKeysetIdInt(k.id));
+			const existingIds = existingMint.keysets.keysets.map((k) =>  k.id);
+			const existingIntIds = existingMint.keysets.keysets.map((k) =>  getKeysetIdInt(k.id));
 			const duplicateIds = ids.filter(id => existingIds.includes(id));
+			const duplicateIntIds = intIds.filter(id => existingIntIds.includes(id));
 			
-			if (duplicateIds.length > 0) {
-				throw new ContextError(`Mint contains colliding keyset ids: ${duplicateIds.join(', ')}`, {
+			if (duplicateIds.length > 0 || duplicateIntIds.length > 0) {
+				throw new ContextError(`Mint contains colliding keyset ids: ${[...duplicateIds,...duplicateIntIds].join(', ')}`, {
 					context: {
 						url,
 						duplicateIds,
