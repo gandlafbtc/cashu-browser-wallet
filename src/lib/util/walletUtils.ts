@@ -1,6 +1,9 @@
 import {
+	CashuAuthMint,
+	CashuAuthWallet,
 	CashuMint,
 	CashuWallet,
+	getBlindedAuthToken,
 	hasValidDleq,
 
 } from '@cashu/cashu-ts';
@@ -16,6 +19,8 @@ import { nip05, nip19 } from 'nostr-tools';
 import { parseSecret } from '@cashu/crypto/modules/common/NUT11';
 import { mints } from '$lib/stores/persistent/mints.js';
 import { getBy, getByMany } from '$lib/stores/persistent/helper/storeHelper.js';
+import { authRequired, authTokens, clearAuthTokens } from '$lib/stores/session/AuthTokens.js';
+import { AuthRequiredError } from '$lib/helpers/errors.js';
 // import { parseSecret } from '@cashu/crypto/modules/client/NUT11';
 /**
  * returns a subset of tokens, so that not all tokens are sent to mint for smaller amounts.
@@ -344,6 +349,8 @@ export const getUnitsForMints = (mints: Mint[]): string[] => {
 	return units;
 };
 
+
+
 export const getWalletWithUnit = async (
 	mints: Mint[],
 	mintUrl: string,
@@ -358,7 +365,27 @@ export const getWalletWithUnit = async (
 	if (!keys) {
 		throw new Error(`No keys for this unit: ${unit} [${mintUrl}]`);
 	}
-	const wallet = new CashuWallet(new CashuMint(mintUrl), {
+
+
+	const getAuthToken = async (): Promise<string> => {
+		const authToken = authTokens.get(mintUrl)?.pop()
+		if (authToken) {
+			return authToken;
+		}
+		const maxMint = mint.info?.nuts[22]?.bat_max_mint
+		if (maxMint) {
+			const clearAuthToken = clearAuthTokens.get(mintUrl)
+			if (!clearAuthToken) {
+				authRequired.set([mintUrl, mint.info?.nuts[21].openid_discovery])
+				throw new AuthRequiredError(`Requires auth for ${mintUrl}`, true,);
+			}
+			const newAuthTokens = await getBlindedAuthToken(Math.min(maxMint, 100), mint.url, )
+			authTokens.set(mintUrl, newAuthTokens)
+		}
+		return '';
+	}
+
+	const wallet = new CashuWallet(new CashuMint(mintUrl, undefined, getAuthToken), {
 		bip39seed: get(seed),
 		mintInfo: mint.info,
 		unit: unit,

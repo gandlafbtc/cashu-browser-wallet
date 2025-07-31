@@ -21,3 +21,14 @@ export class ContextError extends Error {
 		this.context = this.context;
 	}
 }
+export class AuthRequiredError extends Error {
+	context?: unknown;
+	cause?: Error;
+	authRequired: boolean;
+	constructor(message: string, authRequired: boolean, options?: { cause?: Error; context?: unknown }) {
+		super(message, options);
+		this.authRequired = authRequired;
+		this.name = 'ContextError';
+		this.context = this.context;
+	}
+}
